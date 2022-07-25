@@ -39,8 +39,6 @@ public:
   Eigen::Matrix<double, 8, 6> IK(Eigen::Vector3d p60, Eigen::Matrix3d R60);
   Trajectory P2P(Eigen::Vector<double, 6> starting, Eigen::Vector<double, 6> final, uint minT, uint maxT, uint dt);
   friend Eigen::Matrix3d eul2rotm(Eigen::Vector3d rpy);
-  friend Eigen::Vector3d quat2eul(Eigen::Vector4d quat);
 };
 
 Eigen::Matrix3d eul2rotm(Eigen::Vector3d rpy);
-Eigen::Vector3d quat2eul(Eigen::Vector4d quat);

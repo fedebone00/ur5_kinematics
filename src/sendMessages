@@ -1,0 +1,73 @@
+#!/bin/zsh
+
+index=0
+pos=0
+state=0
+isFirst=1
+modelNames=()
+modelPositions=()
+modelRotations=()
+
+for i in $(rostopic echo -n 1 /gazebo/link_states)
+do
+  case $state in
+    0)
+      [[ "$i" == "name:" ]] && state=1
+    ;;
+    1)
+      if [[ "$i" == "-" ]]
+        then
+      elif [[ "$i" == "pose:" ]]
+        then
+          state=2
+        else
+          modelNames+=($i)
+      fi
+    ;;
+    2)
+      case $i in
+         "-"|"x:"|"y:"|"z:"|"w:"|"twist:")
+          break 
+          ;;
+        "position:")
+          if [[ $isFirst == 0 ]]
+          then
+            index=$(($index + 1))
+            echo -n "]' ${modelNames[$index]} \n'["  >> appfile
+          else
+            echo -n "'[" >> appfile
+            isFirst=0
+          fi
+          pos=1
+          break
+          ;;
+        "orientation:")
+          echo -n "]' '[0.0,3.14,0.0" >> appfile
+          pos=0
+          break
+          ;;
+        *)
+          [[ $pos == 1 ]] && echo -n "$i," >> appfile
+          # echo -n "$i," >> appfile
+          break
+          ;;
+      esac
+    ;;
+  esac
+done
+
+echo "]' ${modelNames[$index]}" >> appfile
+
+while read i
+do
+  name=$(echo $i | awk '{print $3}')
+  first=${name:0:1}
+  if [[ $first == "X" ]]
+    then
+      name=$(echo $i | awk -F:: '{print $1}')
+      echo rostopic pub -1 /motion/plan kinematics/brick "$name"
+      # exec $(echo rostopic pub /motion/plan kinematics/brick "$name x: 0.05 y: 0.05 z: 0.05")
+  fi
+done < appfile
+
+rm -f appfile
